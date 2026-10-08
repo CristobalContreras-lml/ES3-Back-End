@@ -1,0 +1,156 @@
+
+==================================================
+1 - SIN TOKEN  ·  se espera 401 Unauthorized
+==================================================
+
+$ curl -i -X GET /api/lotes/
+
+--> HTTP 401
+{"detail":"Las credenciales de autenticación no se proveyeron."}
+
+==================================================
+2 - PEDIR TOKEN  ·  se espera 200 y un token
+==================================================
+
+$ curl -X POST -d "username=jefe&password=***" http://127.0.0.1:8000/api/token/
+
+--> HTTP 200
+{"token":"af3eae333b28..."}   (truncado a proposito: nunca se publica entero)
+
+==================================================
+3 - LISTAR CON TOKEN  ·  se espera 200 y respuesta paginada
+==================================================
+
+$ curl -i -X GET /api/lotes/
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 200
+{"count":6,"next":null,"previous":null,"results":[{"id":1,"nombre":"Queso mantecoso","categoria":"Lacteos","numero_lote":"L-1180","cantidad":12,"vence":"2026-08-20","estado_actual":"ROJO","dias_restantes":-48,"motivo_actual":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","cambio_de_estado":false,"estado_registro":"ROJO","motivo_registro":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","fecha_registro":"2026-10-07T00:03:59.523732-03:00","eliminado":false,"fecha_eliminacion":null},{"id":2,"nombre":"Lechuga hidroponica","categoria":"Verduras","numero_lote":"V-220","cantidad":40,"vence":"2026
+
+==================================================
+4 - CREAR  ·  se espera 201 Created
+==================================================
+
+$ curl -i -X POST /api/lotes/
+  -d {"nombre":"Queso gauda","categoria":"Lacteos","numero_lote":"L-4040","cantidad":15,"vence":"2027-06-30"}
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 201
+{"id":7,"nombre":"Queso gauda","categoria":"Lacteos","numero_lote":"L-4040","cantidad":15,"vence":"2027-06-30","estado_actual":"VERDE","dias_restantes":266,"motivo_actual":"ACEPTADO: vigente, quedan 266 dias. Se guarda detras de los lotes mas antiguos (FIFO).","cambio_de_estado":false,"estado_registro":"VERDE","motivo_registro":"ACEPTADO: vigente, quedan 266 dias. Se guarda detras de los lotes mas antiguos (FIFO).","fecha_registro":"2026-10-07T00:04:07.097521-03:00","eliminado":false,"fecha_eliminacion":null}
+
+==================================================
+5 - CREAR CON DATOS MALOS  ·  se espera 400 Bad Request
+==================================================
+
+$ curl -i -X POST /api/lotes/
+  -d {"nombre":"X","categoria":"Abarrotes","numero_lote":"H-1","cantidad":-3,"vence":"2027-06-30"}
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 400
+{"nombre":["El nombre debe tener al menos 3 caracteres."],"categoria":["\"Abarrotes\" no es una elección válida."],"cantidad":["Asegúrese de que este valor es mayor o igual a 1."]}
+
+==================================================
+6 - VER UNO  ·  se espera 200
+==================================================
+
+$ curl -i -X GET /api/lotes/1/
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 200
+{"id":1,"nombre":"Queso mantecoso","categoria":"Lacteos","numero_lote":"L-1180","cantidad":12,"vence":"2026-08-20","estado_actual":"ROJO","dias_restantes":-48,"motivo_actual":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","cambio_de_estado":false,"estado_registro":"ROJO","motivo_registro":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","fecha_registro":"2026-10-07T00:03:59.523732-03:00","eliminado":false,"fecha_eliminacion":null}
+
+==================================================
+7 - ID QUE NO EXISTE  ·  se espera 404 Not Found
+==================================================
+
+$ curl -i -X GET /api/lotes/99999/
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 404
+{"detail":"No Lote matches the given query."}
+
+==================================================
+8 - EDITAR UN CAMPO (PATCH)  ·  se espera 200
+==================================================
+
+$ curl -i -X PATCH /api/lotes/1/
+  -d {"cantidad":44}
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 200
+{"id":1,"nombre":"Queso mantecoso","categoria":"Lacteos","numero_lote":"L-1180","cantidad":44,"vence":"2026-08-20","estado_actual":"ROJO","dias_restantes":-48,"motivo_actual":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","cambio_de_estado":false,"estado_registro":"ROJO","motivo_registro":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","fecha_registro":"2026-10-07T00:03:59.523732-03:00","eliminado":false,"fecha_eliminacion":null}
+
+==================================================
+9 - FILTRAR POR ESTADO  ·  se espera 200
+==================================================
+
+$ curl -i -X GET /api/lotes/?estado=ROJO
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 200
+{"count":4,"next":null,"previous":null,"results":[{"id":1,"nombre":"Queso mantecoso","categoria":"Lacteos","numero_lote":"L-1180","cantidad":44,"vence":"2026-08-20","estado_actual":"ROJO","dias_restantes":-48,"motivo_actual":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","cambio_de_estado":false,"estado_registro":"ROJO","motivo_registro":"RECHAZADO: el lote esta vencido o vence hoy (-48 dias). No se puede usar, se registra como merma.","fecha_registro":"2026-10-07T00:03:59.523732-03:00","eliminado":false,"fecha_eliminacion":null},{"id":2,"nombre":"Lechuga hidroponica","categoria":"Verduras","numero_lote":"V-220","cantidad":40,"vence":"2026
+
+==================================================
+10 - RESUMEN DEL SEMAFORO  ·  se espera 200
+==================================================
+
+$ curl -i -X GET /api/lotes/resumen/
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 200
+{"hoy":"2026-10-07","total":7,"por_estado":{"ROJO":4,"AMARILLO":0,"VERDE":3,"INVALIDO":0},"unidades_en_riesgo":122}
+
+==================================================
+11 - TOKEN DE OTRO ROL (lector)  ·  se espera 403 Forbidden al crear
+==================================================
+
+$ curl -i -X POST /api/lotes/
+  -d {"nombre":"Leche","categoria":"Lacteos","numero_lote":"L-8","cantidad":2,"vence":"2027-06-30"}
+  -H "Authorization: Token 7e48b1dd..."   (truncado)
+
+--> HTTP 403
+{"detail":"Tu rol no permite esta operación sobre los lotes."}
+
+==================================================
+12 - BORRAR CON EL LECTOR  ·  se espera 403 Forbidden
+==================================================
+
+$ curl -i -X DELETE /api/lotes/1/
+  -H "Authorization: Token 7e48b1dd..."   (truncado)
+
+--> HTTP 403
+{"detail":"Tu rol no permite esta operación sobre los lotes."}
+
+==================================================
+13 - BORRAR CON EL JEFE  ·  se espera 204 No Content
+==================================================
+
+$ curl -i -X DELETE /api/lotes/1/
+  -H "Authorization: Token af3eae33..."   (truncado)
+
+--> HTTP 204
+
+
+==================================================
+14 - JWT CON EXPIRACION  ·  se espera 200 con access y refresh
+==================================================
+
+$ curl -X POST -d "username=jefe&password=***" http://127.0.0.1:8000/api/jwt/
+
+--> HTTP 200
+{"access":"eyJhbGciOiJIUzI1Ni...","refresh":"eyJhbGciOiJIUzI1Ni..."}   (truncados)
+El access caduca a los 30 minutos; el refresh sirve para renovarlo.
+
+==================================================
+15 - TOKEN INVENTADO  ·  se espera 401 Unauthorized
+==================================================
+
+$ curl -i -X GET /api/lotes/
+  -H "Authorization: Token 00000000..."   (truncado)
+
+--> HTTP 401
+{"detail":"Token inválido."}
+
+==================================================
+FIN DE LAS PRUEBAS
+==================================================
