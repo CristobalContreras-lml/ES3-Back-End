@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}{{ lote.nombre }}{% endblock %}
+
+{% block contenido %}
+<h2>{{ lote.nombre }}</h2>
+<p class="sub">Lote {{ lote.numero_lote }} · {{ lote.categoria }}</p>
+
+<table style="max-width:620px">
+  <tr><th>Cantidad</th><td>{{ lote.cantidad }} unidades</td></tr>
+  <tr><th>Vence</th><td>{{ lote.vence|date:"d-m-Y" }}</td></tr>
+  <tr><th>Días restantes</th>
+      <td>{% if lote.dias_restantes is None %}sin fecha{% else %}{{ lote.dias_restantes }}{% endif %}</td></tr>
+  <tr><th>Estado hoy</th>
+      <td><span class="pill p-{{ lote.estado_actual }}">{{ lote.estado_actual }}</span></td></tr>
+  <tr><th>Motivo</th><td>{{ lote.motivo_actual }}</td></tr>
+  <tr><th>Estado al registrar</th>
+      <td>{{ lote.estado_registro }}
+      {% if lote.cambio_de_estado %}<span class="cambio">cambió desde entonces</span>{% endif %}</td></tr>
+  <tr><th>Registrado</th><td>{{ lote.fecha_registro|date:"d-m-Y H:i" }}</td></tr>
+  {% if lote.eliminado %}
+    <tr><th>Dado de baja</th><td>{{ lote.fecha_eliminacion|date:"d-m-Y H:i" }}</td></tr>
+  {% endif %}
+</table>
+
+<p style="margin-top:16px">
+  <a href="{% url 'lista' %}" class="btn btn-sec">Volver</a>
+  {% if not lote.eliminado %}<a href="{% url 'editar' lote.pk %}" class="btn">Editar</a>{% endif %}
+</p>
+{% endblock %}

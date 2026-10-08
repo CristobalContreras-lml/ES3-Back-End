@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}{{ accion }} lote{% endblock %}
+
+{% block contenido %}
+<h2>{{ accion }} lote</h2>
+<p class="sub">
+  {% if lote %}
+    Al guardar se vuelve a clasificar con la fecha de hoy.
+  {% else %}
+    El semáforo se calcula solo al guardar.
+  {% endif %}
+</p>
+
+<form method="post" class="tarjeta-form" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="msg error">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  {% for campo in form %}
+    <div class="campo-fila">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% if campo.errors %}<ul class="errorlist">
+        {% for e in campo.errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>{% endif %}
+      {% if campo.name == "categoria" %}
+        <p class="ayuda">Cada categoría avisa con distinta anticipación.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <button type="submit" class="btn">{{ accion }}</button>
+  <a href="{% url 'lista' %}" class="btn btn-sec">Cancelar</a>
+</form>
+{% endblock %}

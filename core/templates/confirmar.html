@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Dar de baja{% endblock %}
+
+{% block contenido %}
+<h2>Dar de baja el lote</h2>
+<p class="sub">Esto es un borrado lógico: la ficha se oculta del inventario pero queda registrada.</p>
+
+<form method="post" class="tarjeta-form">
+  {% csrf_token %}
+  <p>
+    <strong>{{ lote.nombre }}</strong> ({{ lote.numero_lote }})<br>
+    {{ lote.cantidad }} unidades · vence el {{ lote.vence|date:"d-m-Y" }}<br>
+    Estado hoy: <span class="pill p-{{ lote.estado_actual }}">{{ lote.estado_actual }}</span>
+  </p>
+  <button type="submit" class="btn btn-peligro">Sí, dar de baja</button>
+  <a href="{% url 'lista' %}" class="btn btn-sec">Cancelar</a>
+</form>
+{% endblock %}

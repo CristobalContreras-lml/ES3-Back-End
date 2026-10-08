@@ -1,0 +1,82 @@
+[
+  {
+    "nombre": "Queso mantecoso",
+    "categoria": "Lacteos",
+    "lote": "L-1180",
+    "cantidad": 12,
+    "vence": "2026-08-20",
+    "estado": "ROJO",
+    "motivo": "RECHAZADO: el lote esta vencido o vence hoy (-3 dias). No se puede usar, se registra como merma.",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Lechuga hidroponica",
+    "categoria": "Verduras",
+    "lote": "V-220",
+    "cantidad": 40,
+    "vence": "2026-08-25",
+    "estado": "AMARILLO",
+    "motivo": "RECHAZADO para bodega: vence en 2 dias (alerta de Verduras: 3 dias). Sacar de inmediato a produccion por FIFO.",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Salsa de tomate casera",
+    "categoria": "Salsas",
+    "lote": "S-4402",
+    "cantidad": 30,
+    "vence": "2026-08-28",
+    "estado": "AMARILLO",
+    "motivo": "RECHAZADO para bodega: vence en 5 dias (alerta de Salsas: 10 dias). Sacar de inmediato a produccion por FIFO.",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Pechuga de pollo",
+    "categoria": "Carnes",
+    "lote": "C-7781",
+    "cantidad": 8,
+    "vence": "2026-09-02",
+    "estado": "VERDE",
+    "motivo": "ACEPTADO: vigente, quedan 10 dias. Se guarda detras de los lotes mas antiguos (FIFO).",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Harina sin cernir",
+    "categoria": "Abarrotes",
+    "lote": "H-0104",
+    "cantidad": 5,
+    "vence": "2026-12-01",
+    "estado": "INVALIDO",
+    "motivo": "Dato invalido: la categoria debe estar en la lista, la cantidad debe ser mayor que 0 y la fecha va en formato AAAA-MM-DD.",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Bolsas al vacio",
+    "categoria": "Empaques",
+    "lote": "E-330",
+    "cantidad": 500,
+    "vence": "2027-03-15",
+    "estado": "VERDE",
+    "motivo": "ACEPTADO: vigente, quedan 204 dias. Se guarda detras de los lotes mas antiguos (FIFO).",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Tomate triturado",
+    "categoria": "Conservas y salsas",
+    "lote": "TM-8834A",
+    "cantidad": 150,
+    "vence": "2028-03-10",
+    "estado": "INVALIDO",
+    "motivo": "Dato invalido: la categoria debe estar en la lista, la cantidad debe ser mayor que 0 y la fecha va en formato AAAA-MM-DD.",
+    "registrado": "2026-08-23"
+  },
+  {
+    "nombre": "Tomate triturado",
+    "categoria": "Salsas",
+    "lote": "TM-8834A",
+    "cantidad": 150,
+    "vence": "2028-03-10",
+    "estado": "VERDE",
+    "motivo": "ACEPTADO: vigente, quedan 565 dias. Se guarda detras de los lotes mas antiguos (FIFO).",
+    "registrado": "2026-08-23"
+  }
+]

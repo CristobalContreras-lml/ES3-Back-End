@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario de lotes{% endblock %}
+
+{% block contenido %}
+<h2>Inventario de lotes</h2>
+<p class="sub">Ordenado por fecha de vencimiento (FIFO). Hoy es {{ hoy }}.</p>
+
+<div class="tarjetas">
+  <div class="tarjeta t-rojo"><span class="n">{{ rojos }}</span><span class="t">Vencidos</span></div>
+  <div class="tarjeta t-amarillo"><span class="n">{{ amarillos }}</span><span class="t">Por vencer</span></div>
+  <div class="tarjeta t-verde"><span class="n">{{ verdes }}</span><span class="t">Vigentes</span></div>
+  <div class="tarjeta t-gris"><span class="n">{{ invalidos }}</span><span class="t">Dato inválido</span></div>
+</div>
+
+{% if unidades_en_riesgo %}
+  <div class="msg aviso">
+    Hay {{ unidades_en_riesgo }} unidades vencidas todavía en bodega. Sácalas como merma.
+  </div>
+{% endif %}
+
+<div class="barra">
+  <form method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+    <input type="search" name="q" value="{{ busqueda }}" placeholder="Buscar insumo o lote...">
+    <select name="estado" class="campo" style="width:auto">
+      <option value="">Todos los estados</option>
+      <option value="ROJO" {% if filtro == "ROJO" %}selected{% endif %}>Vencidos</option>
+      <option value="AMARILLO" {% if filtro == "AMARILLO" %}selected{% endif %}>Por vencer</option>
+      <option value="VERDE" {% if filtro == "VERDE" %}selected{% endif %}>Vigentes</option>
+      <option value="INVALIDO" {% if filtro == "INVALIDO" %}selected{% endif %}>Dato inválido</option>
+    </select>
+    <button type="submit" class="btn btn-sec">Filtrar</button>
+    {% if busqueda or filtro %}<a href="{% url 'lista' %}" class="btn btn-sec">Limpiar</a>{% endif %}
+  </form>
+  <span style="flex:1"></span>
+  {% if puede_crear %}
+    <a href="{% url 'crear' %}" class="btn">+ Registrar lote</a>
+  {% endif %}
+</div>
+
+{% if lotes %}
+<table>
+  <thead>
+    <tr>
+      <th>Insumo</th><th>Categoría</th><th>Lote</th><th>Cant.</th>
+      <th>Vence</th><th>Días</th><th>Estado hoy</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for lote in lotes %}
+    <tr>
+      <td>
+        {{ lote.nombre }}
+        {% if lote.cambio_de_estado %}
+          <span class="cambio">registrado como {{ lote.estado_registro }}</span>
+        {% endif %}
+      </td>
+      <td>{{ lote.categoria }}</td>
+      <td>{{ lote.numero_lote }}</td>
+      <td>{{ lote.cantidad }}</td>
+      <td>{{ lote.vence|date:"d-m-Y" }}</td>
+      <td>{% if lote.dias_restantes is None %}sin fecha{% else %}{{ lote.dias_restantes }}{% endif %}</td>
+      <td><span class="pill p-{{ lote.estado_actual }}">{{ lote.estado_actual }}</span></td>
+      <td style="white-space:nowrap">
+        {% if es_admin %}
+          <a href="{% url 'detalle' lote.pk %}" class="btn btn-sec btn-mini">Ver</a>
+          <a href="{% url 'editar' lote.pk %}" class="btn btn-sec btn-mini">Editar</a>
+          <a href="{% url 'eliminar' lote.pk %}" class="btn btn-peligro btn-mini">Baja</a>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="nota">
+  El estado se recalcula con la fecha de hoy, no se lee el guardado: un lote
+  registrado como vigente aparece en rojo apenas se le pasa la fecha.
+</p>
+{% else %}
+  <div class="vacio">
+    {% if busqueda or filtro %}
+      No hay lotes que coincidan con la búsqueda.
+    {% else %}
+      Todavía no hay lotes registrados.
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

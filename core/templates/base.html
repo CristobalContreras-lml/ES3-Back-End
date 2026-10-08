@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Monitoreo de vencimientos{% endblock %}</title>
+  <style>
+    :root{
+      --rojo:#c0392b; --amarillo:#b7950b; --verde:#1e8449; --gris:#707b7c;
+      --tinta:#1c2833; --papel:#f4f6f7; --borde:#d5dbdb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+         background:var(--papel);color:var(--tinta);line-height:1.5}
+    header{background:var(--tinta);color:#fff;padding:14px 24px;
+           display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+    header h1{font-size:1.05rem;margin:0;flex:1}
+    header a{color:#fff;text-decoration:none;font-size:.88rem;opacity:.85}
+    header a:hover{opacity:1;text-decoration:underline}
+    .usuario{font-size:.82rem;opacity:.7}
+    main{max-width:1060px;margin:0 auto;padding:24px}
+    h2{margin:0 0 4px;font-size:1.3rem}
+    .sub{color:#5d6d7e;font-size:.88rem;margin:0 0 20px}
+    .tarjetas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+    .tarjeta{flex:1;min-width:120px;background:#fff;border:1px solid var(--borde);
+             border-radius:8px;padding:12px 14px;border-left-width:4px}
+    .tarjeta .n{font-size:1.6rem;font-weight:700;display:block}
+    .tarjeta .t{font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:#5d6d7e}
+    .t-rojo{border-left-color:var(--rojo)} .t-rojo .n{color:var(--rojo)}
+    .t-amarillo{border-left-color:var(--amarillo)} .t-amarillo .n{color:var(--amarillo)}
+    .t-verde{border-left-color:var(--verde)} .t-verde .n{color:var(--verde)}
+    .t-gris{border-left-color:var(--gris)} .t-gris .n{color:var(--gris)}
+    table{width:100%;border-collapse:collapse;background:#fff;
+          border:1px solid var(--borde);border-radius:8px;overflow:hidden}
+    th,td{padding:9px 12px;text-align:left;font-size:.88rem;
+          border-bottom:1px solid var(--borde)}
+    th{background:#eaeded;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}
+    tr:last-child td{border-bottom:none}
+    .pill{display:inline-block;padding:2px 9px;border-radius:999px;
+          font-size:.74rem;font-weight:700;color:#fff}
+    .p-ROJO{background:var(--rojo)} .p-AMARILLO{background:var(--amarillo)}
+    .p-VERDE{background:var(--verde)} .p-INVALIDO{background:var(--gris)}
+    .btn{display:inline-block;padding:7px 14px;border-radius:6px;border:1px solid var(--tinta);
+         background:var(--tinta);color:#fff;text-decoration:none;font-size:.85rem;
+         cursor:pointer;font-family:inherit}
+    .btn:hover{opacity:.88}
+    .btn-sec{background:#fff;color:var(--tinta)}
+    .btn-peligro{background:var(--rojo);border-color:var(--rojo)}
+    .btn-mini{padding:3px 9px;font-size:.78rem}
+    .barra{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+    .barra input[type=search]{padding:7px 10px;border:1px solid var(--borde);
+                              border-radius:6px;font-size:.85rem;min-width:200px;font-family:inherit}
+    .msg{padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:.88rem;border-left:4px solid}
+    .msg.exito{background:#e8f6ef;border-color:var(--verde);color:#145a32}
+    .msg.error{background:#fdedec;border-color:var(--rojo);color:#922b21}
+    .msg.info,.msg.debug{background:#eaf2f8;border-color:#2874a6;color:#1b4f72}
+    .msg.aviso{background:#fef9e7;border-color:var(--amarillo);color:#7d6608}
+    form.tarjeta-form{background:#fff;border:1px solid var(--borde);border-radius:8px;
+                      padding:22px;max-width:520px}
+    .campo-fila{margin-bottom:14px}
+    .campo-fila label{display:block;font-size:.82rem;font-weight:600;margin-bottom:4px}
+    .campo{width:100%;padding:8px 10px;border:1px solid var(--borde);
+           border-radius:6px;font-size:.9rem;font-family:inherit}
+    .errorlist{list-style:none;padding:0;margin:4px 0 0;color:var(--rojo);font-size:.8rem}
+    .ayuda{font-size:.78rem;color:#5d6d7e;margin-top:3px}
+    .vacio{background:#fff;border:1px dashed var(--borde);border-radius:8px;
+           padding:34px;text-align:center;color:#5d6d7e}
+    .nota{font-size:.8rem;color:#5d6d7e;margin-top:14px}
+    .cambio{font-size:.72rem;color:var(--rojo);display:block}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Monitoreo de vencimiento de insumos</h1>
+  {% if user.is_authenticated %}
+    <a href="{% url 'lista' %}">Inventario</a>
+    {% if es_admin %}<a href="/admin/">Administrador</a>{% endif %}
+    <span class="usuario">
+      {{ user.username }}{% if es_admin %} · admin{% elif puede_crear %} · normal{% else %} · viewer{% endif %}
+    </span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sec btn-mini">Salir</button>
+    </form>
+  {% endif %}
+</header>
+<main>
+  {% if messages %}
+    {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+  {% endif %}
+  {% block contenido %}{% endblock %}
+</main>
+</body>
+</html>
