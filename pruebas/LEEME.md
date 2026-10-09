@@ -5,8 +5,21 @@ pruebas en cliente HTTP).
 
 ## Qué hay aquí
 
-`salida_curl.txt` — transcripción de 15 peticiones reales contra
-`runserver`, cada una con el código de estado que devolvió.
+- `salida_local.txt` — evidencia **generada por el estudiante** en su
+  computador con `correr_pruebas.py`: 16 peticiones reales contra
+  `runserver`, cada una con el código de estado que devolvió y si coincide
+  con el esperado.
+- `salida_curl.txt` — transcripción de 15 peticiones con `curl`, generada
+  por el asistente de IA en su propio entorno. Se conserva como segunda
+  corrida independiente.
+- `correr_pruebas.py` — el script que produce `salida_local.txt`.
+
+Para regenerar la evidencia propia, con el servidor andando
+(`python manage.py runserver`) y en otra terminal, dentro del venv:
+
+```
+python pruebas\correr_pruebas.py
+```
 
 Los tokens aparecen **truncados** a propósito. Un token completo en un
 archivo que se entrega es una credencial publicada.

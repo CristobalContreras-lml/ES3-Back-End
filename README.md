@@ -26,7 +26,7 @@ sobre el mismo modelo, la misma base y la misma regla.
 
 ## 1. Puesta en marcha desde cero
 
-Probado en un clon limpio con Python 3.12 y Django 6.1.
+Probado con Python 3.14 y Django 6.1 (la suite también se verificó con Python 3.13).
 
 ```bash
 # 1. Entorno virtual
@@ -431,11 +431,22 @@ OK
 
 ### Evidencia en cliente HTTP · `pruebas/`
 
-`pruebas/salida_curl.txt` tiene la transcripción de 15 peticiones reales
-contra el servidor, con el código de estado de cada una. Incluye los casos
-malos, que valen tanto como los buenos: sin token (`401`), con datos
-inválidos (`400`), con un id inexistente (`404`) y con un rol sin permiso
-(`403`). Los tokens aparecen truncados.
+| Archivo | Qué es | Quién lo generó |
+|---|---|---|
+| `salida_local.txt` | 16 peticiones contra el servidor, con el código de estado de cada una | el estudiante, con `pruebas/correr_pruebas.py` en su computador |
+| `salida_curl.txt` | las mismas pruebas con `curl`, en otra corrida | el asistente de IA, en su propio entorno |
+| `LEEME.md` | cómo repetir las pruebas a mano con `curl` | — |
+
+Las dos transcripciones incluyen los casos malos, que valen tanto como los
+buenos: sin token (`401`), con datos inválidos (`400`), con un id inexistente
+(`404`) y con un rol sin permiso (`403`). Los tokens aparecen truncados y las
+contraseñas nunca se escriben.
+
+Para repetirlas, con el servidor andando en otra terminal:
+
+```
+python pruebas\correr_pruebas.py
+```
 
 ---
 

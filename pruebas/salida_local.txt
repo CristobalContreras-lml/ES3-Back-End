@@ -1,0 +1,131 @@
+Evidencia de pruebas de la API · 09-10-2026 09:18
+Servidor: http://127.0.0.1:8000
+Corrido por el estudiante en su computador.
+
+============================================================
+1 - SIN TOKEN  ·  se espera 401
+============================================================
+$ GET /api/lotes/
+--> HTTP 401   [OK]
+
+============================================================
+2 - PEDIR TOKEN (jefe)  ·  se espera 200
+============================================================
+$ POST /api/token/   cuerpo: username=jefe&password=***
+--> HTTP 200   [OK]
+{"token": "b1f6bf2a6b..."}   (truncado: nunca se publica entero)
+
+============================================================
+3 - LISTAR CON TOKEN (paginado)  ·  se espera 200
+============================================================
+$ GET /api/lotes/
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 200   [OK]
+
+============================================================
+4 - CREAR  ·  se espera 201
+============================================================
+$ POST /api/lotes/
+  cuerpo: {"nombre": "Queso de prueba", "categoria": "Lacteos", "numero_lote": "T-091842", "cantidad": 15, "vence": "2027-10-09"}
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 201   [OK]
+{"id":7,"nombre":"Queso de prueba","categoria":"Lacteos","numero_lote":"T-091842","cantidad":15,"vence":"2027-10-09","estado_actual":"VERDE","dias_restantes":365,"motivo_actual":"ACEPTADO: vigente, quedan 365 dias. Se guarda detras de los lotes mas antiguos (FIFO).","cambio_de_estado":false,"estado_registro":"VERDE","motivo_registro":"ACEPTADO: vigente, quedan 365 dias. Se guarda detras de los lotes mas antiguos (FIFO).","fecha_registro":"2026-10-09T09:18:42.579440-03:00","eliminado":false,"fech ...
+
+============================================================
+5 - CREAR CON DATOS MALOS  ·  se espera 400
+============================================================
+$ POST /api/lotes/
+  cuerpo: {"nombre": "X", "categoria": "Abarrotes", "numero_lote": "H-1", "cantidad": -3, "vence": "2027-10-09"}
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 400   [OK]
+{"nombre":["El nombre debe tener al menos 3 caracteres."],"categoria":["\"Abarrotes\" no es una elección válida."],"cantidad":["Asegúrese de que este valor es mayor o igual a 1."]}
+
+============================================================
+6 - VER UNO  ·  se espera 200
+============================================================
+$ GET /api/lotes/7/
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 200   [OK]
+
+============================================================
+7 - ID QUE NO EXISTE  ·  se espera 404
+============================================================
+$ GET /api/lotes/99999/
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 404   [OK]
+
+============================================================
+8 - EDITAR UN CAMPO (PATCH)  ·  se espera 200
+============================================================
+$ PATCH /api/lotes/7/
+  cuerpo: {"cantidad": 44}
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 200   [OK]
+
+============================================================
+9 - FILTRAR POR ESTADO  ·  se espera 200
+============================================================
+$ GET /api/lotes/?estado=ROJO
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 200   [OK]
+
+============================================================
+10 - RESUMEN DEL SEMAFORO  ·  se espera 200
+============================================================
+$ GET /api/lotes/resumen/
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 200   [OK]
+{"hoy":"2026-10-09","total":7,"por_estado":{"ROJO":4,"AMARILLO":0,"VERDE":3,"INVALIDO":0},"unidades_en_riesgo":90}
+
+============================================================
+11 - TOKEN DEL LECTOR  ·  se espera 403 al crear
+============================================================
+Token del lector: 23da37b84e...  (truncado)
+
+============================================================
+11b - LECTOR INTENTA CREAR  ·  se espera 403
+============================================================
+$ POST /api/lotes/
+  cuerpo: {"nombre": "Queso de prueba", "categoria": "Lacteos", "numero_lote": "T-091842", "cantidad": 15, "vence": "2027-10-09"}
+  Authorization: Token 23da37b8...  (truncado)
+--> HTTP 403   [OK]
+
+============================================================
+12 - LECTOR INTENTA BORRAR  ·  se espera 403
+============================================================
+$ DELETE /api/lotes/7/
+  Authorization: Token 23da37b8...  (truncado)
+--> HTTP 403   [OK]
+
+============================================================
+13 - JEFE DA DE BAJA  ·  se espera 204
+============================================================
+$ DELETE /api/lotes/7/
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 204   [OK]
+
+============================================================
+14 - BORRAR DE NUEVO (ya no existe para la API)  ·  se espera 404
+============================================================
+$ DELETE /api/lotes/7/
+  Authorization: Token b1f6bf2a...  (truncado)
+--> HTTP 404   [OK]
+
+============================================================
+15 - JWT CON EXPIRACION  ·  se espera 200 con access y refresh
+============================================================
+$ POST /api/jwt/   cuerpo: {"username": "jefe", "password": "***"}
+--> HTTP 200   [OK]
+{"access": "eyJhbGciOiJIUzI1...", "refresh": "eyJhbGciOiJIUzI1..."}
+(truncados) El access caduca a los 30 minutos; el refresh lo renueva.
+
+============================================================
+16 - TOKEN INVENTADO  ·  se espera 401
+============================================================
+$ GET /api/lotes/
+  Authorization: Token 00000000...  (truncado)
+--> HTTP 401   [OK]
+
+============================================================
+RESULTADO: todas las peticiones dieron el codigo esperado.
+============================================================

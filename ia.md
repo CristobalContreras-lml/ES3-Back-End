@@ -10,41 +10,33 @@
 
 # Parte 1 · Eva 3 (API REST con DRF)
 
-## Qué le pedí
+## Cómo usé la IA en esta entrega
 
-Usé Claude (Anthropic) para convertir en API REST el proyecto que ya tenía
-funcionando con pantallas HTML. Lo que pedí fue la traducción de cada
-pieza —ModelForm a serializer, cuatro vistas a ViewSet, sesión a token— y
-la justificación de cada decisión de configuración, porque el criterio
-3.1.1 pide justificarlas y no solo tenerlas.
+Usé Claude (Anthropic). Le entregué el PDF de instrucciones de la ES3 y mi
+proyecto de la ES2, y le pedí que construyera la API REST sobre él. Claude
+escribió el código (serializer, ViewSet, permisos, configuración de DRF,
+tests y documentación). Yo lo instalé en mi computador, corrí los 57 tests,
+levanté el servidor para comprobar que las pantallas HTML de la ES2 seguían
+funcionando, y armé el repositorio con sus commits.
 
-La consulta de seguridad, que el criterio 3.1.2 exige:
+Una aclaración sobre la evidencia: la primera transcripción de peticiones
+(`pruebas/salida_curl.txt`) la generó Claude en su propio entorno, no yo.
+Por eso reproduje las pruebas en mi computador con
+`pruebas/correr_pruebas.py` y guardé ese resultado aparte, en
+`pruebas/salida_local.txt`. Esa es la evidencia que ejecuté yo.
 
-> *«Tengo tres roles en grupos de Django (admin, normal, viewer) que ya
-> controlan mis vistas HTML con decoradores. Al exponer el mismo modelo
-> como API, ¿conviene definir permisos nuevos de DRF o reutilizar esos
-> grupos? ¿Y por qué token y no la sesión que ya tengo funcionando?»*
+## Un error de la IA que apareció al probar
 
-Y la del diseño del serializer:
+Es el único caso de esta entrega en que lo que escribió la IA estaba mal y
+hubo que corregirlo.
 
-> *«Mi modelo tiene campos guardados y propiedades calculadas: el estado
-> se recalcula con la fecha de hoy, no se lee de la base. ¿Cómo se expone
-> eso en un serializer sin que el cliente pueda escribirlo?»*
+La primera versión del serializer puso la regla de negocio «no se recibe en
+bodega un lote ya vencido» dentro de `validate()`, que corre tanto al crear
+como al editar. Parecía correcto: es la misma regla que ya tenía en el
+`clean()` de mi `forms.py`.
 
-## Qué descarté de lo que me respondió
-
-### 1. La validación del vencido aplicada también al editar
-
-Este es el error que más me costó, y no lo vi leyendo el código: salió
-**probando con `curl`**.
-
-La primera versión del serializer puso la regla de negocio «no se recibe
-en bodega un lote ya vencido» dentro de `validate()`, que corre tanto al
-crear como al editar. Parecía correcto: es la misma regla que ya tenía en
-el `clean()` de mi `forms.py`.
-
-Al probar los endpoints en orden, el `PATCH` sobre el lote 1 devolvió
-`400` donde esperaba `200`:
+Al probar los endpoints en orden, el `PATCH` sobre el lote 1 devolvió `400`
+donde se esperaba `200`:
 
 ```
 8 - EDITAR UN CAMPO (PATCH)  ·  se esperaba 200
@@ -52,110 +44,91 @@ Al probar los endpoints en orden, el `PATCH` sobre el lote 1 devolvió
 {"vence":["El lote ya está vencido: no se puede recibir en bodega..."]}
 ```
 
-El lote 1 había vencido 48 días antes. Con esa validación, **un lote
-vencido quedaba congelado**: nadie podía corregirle el nombre ni ajustar
-la cantidad. Y ajustar la cantidad es justo lo que hay que hacer con un
-lote vencido, para registrar la merma.
+El lote 1 había vencido 48 días antes. Con esa validación, **un lote vencido
+quedaba congelado**: nadie podía corregirle el nombre ni ajustar la
+cantidad. Y ajustar la cantidad es justo lo que hay que hacer con un lote
+vencido, para registrar la merma.
 
-Recibir es un acto de ingreso; corregir no lo es. La regla va solo al
-crear:
+Recibir es un acto de ingreso; corregir no lo es. La regla pasó a aplicarse
+solo al crear:
 
 ```python
 if self.instance is not None:
     return datos          # es una edicion: la regla no aplica
 ```
 
-Lo corregí **en las dos interfaces**, no solo en la API: el mismo defecto
-estaba en `forms.py` desde la ES2, porque `clean()` también corre al
-editar. Si lo arreglaba solo en el serializer, la pantalla HTML y el
-endpoint habrían quedado comportándose distinto sobre la misma regla, que
-es peor que el error original. Quedaron dos tests que lo fijan:
+Se corrigió **en las dos interfaces**, no solo en la API: el mismo defecto
+estaba en `forms.py` desde la ES2, porque `clean()` también corre al editar.
+Si se arreglaba solo en el serializer, la pantalla HTML y el endpoint habrían
+quedado comportándose distinto sobre la misma regla, que es peor que el error
+original. Quedaron dos tests que lo fijan:
 `test_se_puede_editar_un_lote_ya_vencido` y
 `test_crear_un_lote_vencido_sigue_bloqueado`, el segundo para que la
 corrección no abra la puerta al crear.
 
-### 2. `fields = "__all__"` en el serializer
+## Decisiones de seguridad del código
 
-Es la forma corta y aparece en casi todos los ejemplos. No la usé.
+El PDF de la unidad lista errores típicos de la IA en este tema. Ninguno de
+ellos lo propuso Claude en esta sesión; los anoto porque el código evita
+cada uno y debo poder explicar por qué.
 
-Con `__all__`, cualquier campo que se agregue mañana al modelo queda
-expuesto en la API sin que nadie lo haya decidido. Enumerar los campos a
-mano obliga a tomar la decisión cada vez. Es la misma razón por la que en
-la ES2 no dejé que el `choices` de categorías estuviera escrito en dos
-lugares: lo que se escribe dos veces, algún día queda distinto.
+**`AllowAny` «para poder probar».** No se usó, ni siquiera de forma
+temporal. El default del proyecto es `IsAuthenticated`, y si falta el token
+la API responde `401`. La primera prueba de la evidencia es justamente una
+petición sin token. Que la API esté cerrada es parte de lo que hay que
+demostrar. Tampoco se usó `@csrf_exempt`: apagar la alarma no arregla la
+puerta.
 
-### 3. Permisos nuevos para la API
+**`fields = "__all__"` en el serializer.** No se usó. Con `__all__`,
+cualquier campo que se agregue mañana al modelo queda expuesto sin que nadie
+lo haya decidido. Los campos se enumeran a mano.
 
-La ruta fácil era escribir permisos de DRF desde cero, independientes de
-los grupos que ya tenía. No lo hice.
+**Estado editable por el cliente.** `estado_registro`, `motivo_registro` y
+`fecha_registro` están en `read_only_fields`, y `estado_actual`,
+`dias_restantes` y `cambio_de_estado` son de solo lectura por naturaleza.
+Si el cliente pudiera escribirlos, bastaría mandar
+`{"estado_registro": "VERDE"}` para declarar vigente un lote vencido. Hay un
+test que lo comprueba: `test_el_cliente_no_puede_declarar_el_estado`.
 
+**Permisos nuevos y separados de los de la ES2.** No se hicieron.
 `core/permissions.py` llama a la misma función `tiene_rol()` que usan los
-decoradores de `views.py`. Una sola fuente de autorización para las dos
-interfaces. Si la API tuviera su propia tabla, bastaría un descuido para
-que el bodeguero pudiera borrar por `/api/` lo que no puede borrar por la
-pantalla: el agujero no estaría en ninguno de los dos archivos sino en que
-son dos.
+decoradores de `views.py`, así que hay una sola fuente de autorización para
+las dos interfaces. Si la API tuviera su propia tabla de permisos, un
+descuido bastaría para que el bodeguero borrara por `/api/` lo que no puede
+borrar por la pantalla.
 
-### 4. Abrir los permisos «para poder probar»
+**Token en la URL o dentro del código.** El token va en la cabecera
+`Authorization`. En el repositorio, en el README y en `pruebas/` aparece
+truncado.
 
-En ningún momento puse `AllowAny`, ni siquiera temporalmente, ni
-`@csrf_exempt`. Es la tentación obvia cuando un `401` estorba, y es
-exactamente lo que el criterio 3.1.2 castiga: apagar la alarma en vez de
-abrir la puerta con la llave.
+**Mezclar `APIView`, `generics` y `ViewSet`.** Se usa solo `ViewSet`: el
+recurso es uno (`lotes`) y las operaciones son las cinco estándar, así que
+escribir cinco clases sería repetir a mano lo que el router ya resuelve.
 
-Los 28 tests de la API se autentican pidiendo un token real:
+## Lo que se verificó
 
-```python
-token = Token.objects.create(user=self.jefe)
-self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-```
+**Que DRF funcione con Django 6.1.** Es una versión reciente y DRF suele ir
+detrás. Se comprobó instalando antes de escribir código: DRF 3.18.3,
+simplejwt 5.5.1 y drf-spectacular 0.30.0 conviven con Django 6.1. Las
+versiones quedaron fijadas en `requirements.txt`.
 
-Y la primera prueba de `pruebas/salida_curl.txt` es justamente una
-petición **sin** token, para dejar registrado que devuelve `401`. Que la
-API esté cerrada es parte de lo que hay que demostrar, no un obstáculo
-para demostrar lo demás.
+**Que las pantallas HTML siguieran vivas.** El riesgo real de esta entrega es
+romper la ES2 al agregar la API. Los 29 tests de `tests.py` no se tocaron y
+se corren junto con los 28 nuevos: `Ran 57 tests, OK`. Lo corrí en mi
+computador.
 
-### 5. Mezclar `APIView`, `generics` y `ViewSet`
-
-Los ejemplos que se encuentran usan los tres estilos indistintamente y es
-fácil terminar con uno de cada uno en el mismo proyecto. Elegí **solo
-ViewSet**: el recurso es uno (`lotes`) y las operaciones son las cinco
-estándar, así que escribir cinco clases sería repetir a mano lo que el
-router ya resuelve. Un proyecto con los tres estilos no se puede
-justificar en la defensa.
-
-## Lo que verifiqué en vez de asumirlo
-
-**Que DRF funcione con Django 6.1.** Mi proyecto está en Django 6.1, que
-es reciente, y DRF suele ir detrás de las versiones nuevas de Django. Lo
-comprobé instalando antes de escribir código: DRF 3.18.3, simplejwt 5.5.1
-y drf-spectacular 0.30.0 conviven con Django 6.1. Las versiones quedaron
-fijadas en `requirements.txt`.
-
-**Que las pantallas HTML siguieran vivas.** El riesgo real de esta entrega
-es romper la ES2 al agregar la API. Por eso los 29 tests de `tests.py` no
-se tocaron y se siguen corriendo junto con los nuevos: `Ran 57 tests, OK`.
-Si una ruta de la ES2 se hubiera roto al agregar el router, esos tests lo
-habrían avisado.
-
-**Que el estado no se pueda falsificar.** No basta con poner el campo en
-`read_only_fields` y confiar. Hay un test que manda `"estado_registro":
-"VERDE"` en el JSON sobre un lote que vence en 2 días, y comprueba que lo
-guardado termina siendo `AMARILLO`, que es lo que dice la regla.
-
-**Los códigos de estado, uno por uno, contra el servidor real.** No
-confié en que DRF devolviera el correcto: las 15 peticiones de
-`pruebas/salida_curl.txt` son contra `runserver`, con el código impreso.
-Incluye los casos malos, que es donde se ve si la API está bien hecha:
-`401` sin token, `403` con el rol equivocado, `400` con datos inválidos y
-`404` con un id que no existe.
+**Los códigos de estado, contra el servidor real.** Las peticiones incluyen
+los casos malos, que es donde se ve si la API está bien hecha: `401` sin
+token, `403` con el rol equivocado, `400` con datos inválidos y `404` con un
+id que no existe.
 
 ## Resultado
 
 ```
 python manage.py check                   -> sin issues
 python manage.py test                    -> Ran 57 tests ... OK
-pruebas/salida_curl.txt                  -> 15 peticiones, codigos esperados
+pruebas/salida_curl.txt                  -> 15 peticiones (generadas por Claude)
+pruebas/salida_local.txt                 -> las mismas pruebas, corridas por mí
 ```
 
 ---
